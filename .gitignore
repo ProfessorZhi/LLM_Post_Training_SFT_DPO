@@ -1,0 +1,19 @@
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Large or private experiment artifacts
+checkpoints/
+logs/
+runs/
+datasets/raw/
+datasets/intermediate/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.jsonl
+*.parquet
