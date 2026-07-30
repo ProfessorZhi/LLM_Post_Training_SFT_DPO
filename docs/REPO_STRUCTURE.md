@@ -22,6 +22,7 @@ Dataset notes and construction logic:
 Supporting documentation:
 
 - [REPRO_GUIDE.md](REPRO_GUIDE.md): runtime, script entrypoints, and reproduction notes
+- [DPO_EXPERIMENT_RECORD.md](DPO_EXPERIMENT_RECORD.md): DPO data branches, results, and record-keeping limits
 - [ASSET_INDEX.md](ASSET_INDEX.md): public artifact map and excluded artifact policy
 - [REPO_STRUCTURE.md](REPO_STRUCTURE.md): this file
 
