@@ -33,4 +33,4 @@ The benchmark identity and private submission metadata are intentionally omitted
 
 ## Interpretation
 
-The main gain came from improving FIM data quality and selecting the right SFT checkpoint. DPO completed the training and evaluation path, but the available preference data did not produce a stable improvement over the selected SFT checkpoint.
+The main gain came from improving FIM data quality and selecting the right SFT checkpoint. Early DPO rounds (synthetic / mimic rejected samples) did not improve on the selected SFT checkpoint. A final round that built rejected samples from the SFT model's own sampled errors (self-modelgen, roughly 5k–6k pairs) clearly reduced repetition, suffix copying and length blow-ups and outperformed the SFT baseline. Its dataset, logs and checkpoint were lost when the training server expired, so all scores published here are for the SFT `750-step` checkpoint.
