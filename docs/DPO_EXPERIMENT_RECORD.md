@@ -104,9 +104,9 @@ chosen == rejected:      0
 FIM token / markdown leak in rejected: 0
 ```
 
-## 4. Why DPO Did Not Replace SFT
+## 4. Why the Early DPO Rounds Did Not Beat SFT
 
-The DPO branch did not become the final model because it did not produce a stable fixed-eval improvement over `V2.5 fn-only filtered / 750-step`.
+The early DPO rounds recorded above did not produce a stable fixed-eval improvement over `V2.5 fn-only filtered / 750-step`.
 
 Likely reasons:
 
@@ -115,6 +115,17 @@ Likely reasons:
 - Some preference pairs improve surface preference loss but do not directly improve exact middle reconstruction.
 - FIM fixed eval is sensitive to boundary length and syntax; DPO data needs to target those errors very precisely.
 - Training strength was kept conservative to avoid damaging the already useful SFT checkpoint.
+
+## 4.1 Final Round: Self-Modelgen DPO
+
+Based on the diagnosis above, a final round changed how rejected samples were built:
+
+- Initialization and reference: `V2.5 fn-only filtered / 750-step`.
+- Rejected: multiple samples from the SFT model on held-out FIM prompts, filtered by similarity band, structural completeness, suffix overlap, repetition window and length ratio to keep plausible-but-wrong outputs. Chosen: the gold middle.
+- Scale: roughly 5k–6k preference pairs; a stronger update setting (`lr=5e-7`) was compared against the default weak update.
+- Result: repetition, suffix copying and length blow-ups dropped clearly, and the model outperformed the SFT baseline on the fixed FIM eval.
+
+The final dataset, logs and checkpoint were stored on the training server and were lost when it expired. This record therefore states the method and the direction of the effect only, without scores.
 
 ## 5. Record-Keeping Status
 

@@ -6,7 +6,8 @@
 
 - 最终采用模型：`V2.5 fn-only filtered / 750-step`
 - 主要有效增益来自：更干净、更贴近 FIM 任务的数据构造 + checkpoint 选择
-- `DPO` 链路已跑通，但当前偏好数据没有稳定超过 SFT 最优 checkpoint，因此作为实验分支保留
+- `DPO`：早期几轮（合成 / mimic rejected）没有超过 SFT；最终一轮改用 SFT 模型自身错误输出（self-modelgen）构造偏好对，重复、越界与长度失控明显减少，效果优于 SFT 基线
+- 最终一轮 DPO 的数据集、日志和 checkpoint 随训练服务器到期丢失，因此本仓库公开的分数均为 SFT `750-step`，DPO 只记录方法与效果方向，不给具体分数
 - 训练硬件：华为昇腾 `Ascend 910B3` NPU，64GB HBM 级别
 - 训练框架：`MindSpeed-LLM + PyTorch + torch_npu + HCCL`
 
@@ -70,7 +71,7 @@ goal   = 在给定前后文时补全中间代码
 6. 收紧到 `V2.5 fn-only filtered`，重点过滤重复风险、边界续写风险和过长 middle。
 7. 对 `250 / 500 / 750 / 1000 step` 做同口径 fixed eval。
 8. 选择 fixed eval 最好的 `750-step`。
-9. 补做 `DPO` 分支实验，确认 DPO 链路可跑，但不替换最终 SFT checkpoint。
+9. 以 `750-step` 为起点做 `DPO`：早期几轮验证链路但没有提分；最终一轮改用 self-modelgen rejected，效果优于 SFT 基线。
 10. 将最终 MCore checkpoint 导出为 HuggingFace 格式。
 
 代表性 SFT 参数：
@@ -134,11 +135,12 @@ rejected = worse middle
 关键结论：
 
 - DPO 训练、回拉评测、scorer 链路已经跑通。
-- 早期 `DPO smoke 20-step` 与 `V2.5 750-step` 打平，没有带来独立提升。
-- 扩量后的 DPO 数据仍没有稳定超过 `V2.5 750-step` SFT。
-- 根因主要在偏好对质量和训练强度：`rejected` 如果不够贴近真实模型错误，DPO 很容易学不到对 fixed eval 有用的边界控制。
+- 早期 `DPO smoke 20-step` 与 `V2.5 750-step` 打平，没有带来独立提升；扩量后的 MiMo / mimic 数据也没有稳定超过 SFT。
+- 根因主要在偏好对质量和训练强度：`rejected` 如果不够贴近真实模型错误，DPO 很容易学不到对 fixed eval 有用的边界控制；默认弱学习率下输出几乎不变。
+- 最终一轮据此调整：以 `750-step` 为初始化和 reference，对 held-out FIM prompt 多采样生成候选，按相似度区间、结构完整性、后缀越界、重复窗口和长度比例筛出“看似合理但错误”的输出作为 `rejected`，gold middle 作为 `chosen`，构建约 5k–6k 对偏好数据，并对比了更强的更新设置（`lr=5e-7`）。
+- 最终一轮 DPO 后，重复、越界抄后缀和长度失控明显减少，效果优于 SFT 基线。
 
-说明：DPO 部分当时更偏“快速验证和冲刺实验”，部分中间程序和评测产物保留了，但不是每一轮交互式操作都有完整日志化记录。因此公开仓库采用诚实记录方式：保留可解释的实验脉络、代表脚本、最终结论和失败原因，不伪造不存在的完整流水账。
+说明：DPO 部分当时更偏“快速验证和冲刺实验”。早期几轮的中间程序和评测产物保留了；最终一轮的数据集、日志和 checkpoint 留在训练服务器上，随服务器到期丢失。因此公开仓库采用诚实记录方式：保留可解释的实验脉络、代表脚本、最终结论和失败原因，最终一轮只写方法和效果方向，不补造分数或日志。
 
 详见：
 
